@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NeuroRAG – 3D Brain Background</title>
+
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        font-family: "Segoe UI", sans-serif;
+        background: #0f0f1a; /* Darker background for better 3D contrast */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        color: white;
+        perspective: 1200px;
+    }
+
+    /* Full Screen 3D Canvas */
+    #bg-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .particle {
+        position: absolute;
+        font-size: 2.5rem;
+        opacity: 0;
+        filter: drop-shadow(0 0 10px rgba(0, 198, 255, 0.5));
+        animation: float3d linear infinite;
+    }
+
+    @keyframes float3d {
+        0% {
+            transform: translate3d(var(--sx), var(--sy), -500px) rotate(0deg);
+            opacity: 0;
+        }
+        10% { opacity: 0.4; }
+        90% { opacity: 0.4; }
+        100% {
+            transform: translate3d(var(--ex), var(--ey), 500px) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    /* UI Container */
+    .container {
+        width: 420px;
+        padding: 30px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+        z-index: 10;
+        position: relative;
+    }
+
+    h2 { text-align: center; margin-bottom: 5px; font-weight: 600; }
+    p.subtitle { text-align: center; opacity: 0.6; font-size: 0.9rem; margin-bottom: 25px; }
+
+    input {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 1rem;
+        outline: none;
+        box-sizing: border-box;
+        transition: 0.3s;
+    }
+    input:focus { background: rgba(255, 255, 255, 0.15); box-shadow: 0 0 0 2px #00c6ff; }
+
+    button {
+        display: block;
+        width: 100%;
+        margin-top: 20px;
+        padding: 12px;
+        border-radius: 12px;
+        border: none;
+        background: linear-gradient(135deg, #00c6ff, #0072ff);
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    button:active { transform: scale(0.98); }
+
+    .card {
+        display: none;
+        margin-top: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 15px;
+        border-left: 4px solid #00c6ff;
+        animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+</head>
+<body>
+
+    <div id="bg-container"></div>
+
+    <div class="container">
+        <h2>🧠 NeuroRAG AI</h2>
+        <p class="subtitle">Text Knowledge Assistant</p>
+
+        <input type="text" id="question" placeholder="Ask your question here..." />
+        <button onclick="askQuestion()">Ask</button>
+
+        <div id="loader" style="display:none; text-align:center; margin-top:15px;">Thinking...</div>
+
+        <div class="card" id="card">
+            <h4 id="cardTitle" style="margin:0; color:#00c6ff;"></h4>
+            <p id="cardAnswer" style="font-size: 0.95rem; line-height: 1.5; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+<script>
+    // --- 3D Background Logic ---
+    const bgContainer = document.getElementById('bg-container');
+    const emojis = ['🧠', '💡', '✨', '⚡', '🧬'];
+
+    function createParticle() {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        // Random Start Positions (All corners)
+        const sx = (Math.random() - 0.5) * 120 + "vw";
+        const sy = (Math.random() - 0.5) * 120 + "vh";
+        
+        // Random End Positions (Moving across screen)
+        const ex = (Math.random() - 0.5) * 120 + "vw";
+        const ey = (Math.random() - 0.5) * 120 + "vh";
+        
+        const duration = 10 + Math.random() * 15; // 10s to 25s
+        const size = 1 + Math.random() * 2; // 1rem to 3rem
+
+        p.style.setProperty('--sx', sx);
+        p.style.setProperty('--sy', sy);
+        p.style.setProperty('--ex', ex);
+        p.style.setProperty('--ey', ey);
+        p.style.left = "50%";
+        p.style.top = "50%";
+        p.style.fontSize = `${size}rem`;
+        p.style.animationDuration = `${duration}s`;
+        p.style.animationDelay = `-${Math.random() * 20}s`;
+
+        bgContainer.appendChild(p);
+
+        // Remove element after animation to save memory
+        setTimeout(() => p.remove(), duration * 1000);
+    }
+
+    // Initialize Particles
+    for(let i = 0; i < 25; i++) {
+        createParticle();
+    }
+    // Keep generating new ones
+    setInterval(createParticle, 2000);
+
+
+    // --- AI Logic ---
+    async function askQuestion() {
+        const q = document.getElementById("question").value;
+        const loader = document.getElementById("loader");
+        const card = document.getElementById("card");
+
+        if (!q) return;
+
+        loader.style.display = "block";
+        card.style.display = "none";
+
+        try {
+            const res = await fetch("http://127.0.0.1:8000/ask", {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({question: q})
+            });
+            const data = await res.json();
+            
+            document.getElementById("cardTitle").innerText = data.title || "Result Description";
+            document.getElementById("cardAnswer").innerText = data.answer || "No response received.";
+        } catch(err) {
+            document.getElementById("cardTitle").innerText = "Offline Mode";
+            document.getElementById("cardAnswer").innerText = "Backend se connect nahi ho saka. Query: " + q;
+        }
+
+        loader.style.display = "none";
+        card.style.display = "block";
+    }
+</script>
+
+</body>
+</html>

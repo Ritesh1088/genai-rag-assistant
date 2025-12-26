@@ -1,0 +1,4 @@
+Machine Learning is a subset of Artificial Intelligence.
+RAG combines retrieval and generation for accurate answers.
+FAISS is used for efficient vector similarity search.
+LoRA is used to fine-tune LLMs efficiently.
