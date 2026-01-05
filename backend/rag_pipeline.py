@@ -1,39 +1,40 @@
+import os
 import faiss
 import numpy as np
 from embeddings import embed_text
 from transformers import pipeline
 
-# ✅ Correct pipeline for T5
+# Load LLM
 llm = pipeline(
     "text2text-generation",
     model="google/flan-t5-base",
     max_length=256
 )
 
-# Load documents
-documents = open("data/knowledge.txt", encoding="utf-8").read().split("\n")
+# Load knowledge file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "data", "knowledge.txt")
+
+with open(DATA_PATH, encoding="utf-8") as f:
+    documents = [d for d in f.read().split("\n") if d.strip()]
 
 # Create embeddings
-doc_embeddings = embed_text(documents)
-doc_embeddings = np.array(doc_embeddings).astype("float32")
+doc_embeddings = np.array(embed_text(documents)).astype("float32")
 
 # FAISS index
-dimension = doc_embeddings.shape[1]
-index = faiss.IndexFlatL2(dimension)
+index = faiss.IndexFlatL2(doc_embeddings.shape[1])
 index.add(doc_embeddings)
 
 def rag_answer(query: str):
-    # Embed query
-    query_embedding = embed_text([query])
-    query_embedding = np.array(query_embedding).astype("float32")
+    try:
+        query_vec = np.array(embed_text([query])).astype("float32")
+        _, idx = index.search(query_vec, 3)
 
-    # Search top 2 docs
-    _, idx = index.search(query_embedding, 2)
+        sources = [documents[i] for i in idx[0]]
+        context = " ".join(sources)
 
-    context = " ".join([documents[i] for i in idx[0]])
-
-    prompt = f"""
-Answer the question using the context below.
+        prompt = f"""
+Answer the question using the context below in 3–4 clear sentences.
 
 Context:
 {context}
@@ -44,5 +45,14 @@ Question:
 Answer:
 """
 
-    result = llm(prompt)
-    return result[0]["generated_text"]
+        response = llm(prompt)[0]["generated_text"]
+
+        return {
+            "answer": response,
+            "sources": sources
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
