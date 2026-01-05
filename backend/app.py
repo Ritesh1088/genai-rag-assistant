@@ -13,4 +13,8 @@ app.add_middleware(
 
 @app.post("/ask")
 def ask(data: dict):
-    return {"answer": rag_answer(data["question"])}
+    query = data.get("question")
+    if not query:
+        return {"error": "Question is required"}
+
+    return rag_answer(query)
