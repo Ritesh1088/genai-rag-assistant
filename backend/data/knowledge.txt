@@ -1,4 +1,11 @@
-Machine Learning is a subset of Artificial Intelligence.
-RAG combines retrieval and generation for accurate answers.
-FAISS is used for efficient vector similarity search.
-LoRA is used to fine-tune LLMs efficiently.
+Newel Technologies is an IT services and consulting company delivering software development, digital transformation, and enterprise IT solutions.
+
+The company helps businesses design, build, and scale modern applications using reliable technologies and best engineering practices.
+
+Newel Technologies focuses on quality, performance, security, and scalability while delivering customized solutions.
+
+Services include web application development, backend systems, cloud solutions, DevOps, AI and machine learning, and data analytics.
+
+Newel Technologies builds AI-driven systems such as chatbots, recommendation engines, and RAG-based applications.
+
+Retrieval-Augmented Generation (RAG) combines document retrieval with large language models to provide accurate, context-aware answers.
